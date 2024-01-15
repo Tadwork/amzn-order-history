@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "amzn-order-history"
+version = "0.1.0"
+description = ""
+authors = ["Tzvi Friedman <tadwork@gmail.com>"]
+readme = "README.md"
+packages = [{include = "amzn_order_history"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+beautifulsoup4 = "^4.10.0"
+webdriver-manager = "^4.0.1"
+selenium = "^4.16.0"
+
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
