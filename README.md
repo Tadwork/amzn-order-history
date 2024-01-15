@@ -1,4 +1,7 @@
 # amzn-order-history
+
+fork of https://github.com/landscrape-tools/amzn-order-history
+
 Download all of your Amazon order history to CSV files
 
 ## Requirements:

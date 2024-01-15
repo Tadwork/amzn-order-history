@@ -12,10 +12,10 @@
 # - items.csv  - Items ordered
 #
 
-browserProfile='Default2'
-accountName='account3'
-latestYear = 2023
-oldestYear = 2000
+browserProfile='Default'
+accountName='main'
+latestYear = 2024
+oldestYear = 2024
 crawlOrderHistory = True
 downloadInvoicePages = True
 scrapeInvoicePages = True
@@ -89,7 +89,7 @@ def getWebPage(url, scrollToEnd=False):
         if scrollToEnd:
             getWebPage.browser.execute_script("window.scrollTo(0,document.body.scrollHeight)")
             time.sleep(5)
-    except error:
+    except Exception as error:
         vprint('    ERROR: browser.get("%s,%s")'%url,error)
         success = False
         getWebPage.browserShutdown()
@@ -101,10 +101,10 @@ def getWebPage(url, scrollToEnd=False):
 
 def browserStartup():
     options = webdriver.ChromeOptions()
-    options.add_argument("--user-data-dir="+os.path.expanduser('~')+"/Library/Application Support/Google/Chrome/")
-    options.add_argument('--browserProfile-directory='+'"'+browserProfile+'"')
+    # options.add_argument("--user-data-dir="+os.path.expanduser('~')+"/Library/Application Support/Google/Chrome/")
+    # options.add_argument('--browserProfile-directory='+'"'+browserProfile+'"')
     options.add_experimental_option("excludeSwitches", ["test-type","enable-automation","enable-blink-features"])
-
+    options.add_argument("--remote-debugging-port=9222") 
     getWebPage.browser = webdriver.Chrome(options=options, service=ChromeService(ChromeDriverManager().install()))
     vprint(getWebPage.browser.capabilities)
     getWebPage.browserRunning = True    
@@ -210,7 +210,7 @@ def getAmazonOrders():
     if scrapeInvoicePages:
 
         orderFields = ['orderNumber','orderPlacedDate','orderTotal','orderSubtotal','orderShippingAndHandling','orderTotalPreTax','orderTax','orderGrandTotal','paymentMethod','creditCard','creditCardChargeDate']
-        itemFields = ['orderNumber','itemQuantity','itemDescription','itemSeller','itemCondition','itemPrice']
+        itemFields = ['orderNumber','itemQuantity','itemDescription','itemSeller','itemCondition','itemPrice','orderTotal']
 
         with open('orders.csv', 'w', newline='', encoding="utf-8") as ordersFile:
             writer = csv.DictWriter(ordersFile, orderFields)
@@ -267,7 +267,9 @@ def getAmazonOrders():
                 # TODO - handle paymentMethods
                 paymentMethod = page.body.find(string=re.compile('Payment Method:')).next_element.next_element.next_element.strip()
                 creditCard = page.body.find(string=re.compile('ending in')).split(':')[0].strip()
-                creditCardChargeDate = page.body.find(string=re.compile('ending in')).split(':')[1].strip()
+                cc_info = page.body.find(string=re.compile('ending in')).split(':')
+                if len(cc_info) > 1:
+                    creditCardChargeDate = page.body.find(string=re.compile('ending in')).split(':')[1].strip()
             orderRow = {'orderNumber':orderNumber, 'orderPlacedDate':orderPlacedDate, 'orderTotal':orderTotal, 'orderSubtotal':orderSubtotal, \
                         'orderShippingAndHandling':orderShippingAndHandling, 'orderTotalPreTax':orderTotalPreTax, 'orderTax':orderTax, 'orderGrandTotal':orderGrandTotal, \
                         'paymentMethod':paymentMethod,'creditCard':creditCard, 'creditCardChargeDate':creditCardChargeDate}
@@ -297,7 +299,7 @@ def getAmazonOrders():
             itemCount = max([len(itemQuantitiesRaw),len(itemDescriptionsRaw),len(itemSellersRaw),len(itemConditionsRaw),len(itemPricesRaw)])
 
             for i in range(0, itemCount):
-                itemRows.append({'orderNumber':orderNumber})           
+                itemRows.append({'orderNumber':orderNumber, 'orderTotal': orderTotal})           
 
             for itemNum, itemQuantity in enumerate(itemQuantitiesRaw):
                 with ignore(AttributeError):
